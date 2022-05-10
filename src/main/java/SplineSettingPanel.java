@@ -1,5 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class SplineSettingPanel extends JPanel {
@@ -91,7 +92,11 @@ public class SplineSettingPanel extends JPanel {
             ArrayList<Point> points = panel.getSplineHandler().getCurvePoints();
             int m = Integer.parseInt(mField.getText());
             int m1 = Integer.parseInt(m1Field.getText());
-            RenderFrame renderFrame = new RenderFrame(points,m,m1);
+            try {
+                RenderFrame renderFrame = new RenderFrame(points,m,m1);
+            } catch (IOException | NoSuchMethodException ex) {
+                ex.printStackTrace();
+            }
         });
     }
 }

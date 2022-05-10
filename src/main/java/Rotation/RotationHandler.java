@@ -49,6 +49,11 @@ public class RotationHandler {
         finishArcPoint = new Vector3(xFinish, yFinish, zFinish);
     }
 
+    public void setVectors(Vector3 vector1, Vector3 vector2) {
+        startArcPoint = vector1;
+        finishArcPoint = vector2;
+    }
+
     public void updateAxis() {
         this.axis = calcRotationAxis();
     }

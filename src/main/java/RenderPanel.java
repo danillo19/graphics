@@ -1,42 +1,65 @@
 import Rotation.RotationHandler;
+import utils.Vector3;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 public class RenderPanel extends JPanel implements MouseMotionListener, MouseListener, MouseWheelListener {
     private final RenderHandler renderHandler;
     private final RotationHandler rotationHandler;
     private Point startPoint;
-    private int m;
-    private int m1;
+    private final int m;
+    private final int m1;
+    private final double[][] I;
     private boolean mouseWasDragged = false;
 
     public RenderPanel(ArrayList<Point> curvePoints, int m,int m1) {
         this.m = m;
         this.m1 = m1;
-        rotationHandler = new RotationHandler();
-        renderHandler = new RenderHandler(curvePoints,rotationHandler);
-        double[][] I = {
+        this.I = new double[][]{
                 {1, 0, 0},
                 {0, 1, 0},
                 {0, 0, 1}
         };
-
+        rotationHandler = new RotationHandler();
+        renderHandler = new RenderHandler(curvePoints,rotationHandler);
         for(int i = 0;i < 360;i += 360/m) {
-            renderHandler.drawProjection(I, i);
+            renderHandler.drawProjection(rotationHandler.getRotationMatrix(), i);
         }
-        renderHandler.drawCircles(m1,I);
+        renderHandler.drawCircles(m1*m,rotationHandler.getRotationMatrix());
         addMouseListener(this);
         addMouseMotionListener(this);
         addMouseWheelListener(this);
 
     }
 
+    public RenderHandler getRenderHandler() {
+        return renderHandler;
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+        BufferedImage image = renderHandler.getImage();
+
+        if(getHeight() != image.getHeight() || getWidth() != image.getWidth()) {
+            image = new BufferedImage(getWidth(),getHeight(),Image.SCALE_SMOOTH);
+            renderHandler.setImage(image);
+        }
+        Graphics graphics = renderHandler.getImage().getGraphics();
+        graphics.setColor(Color.black);
+        graphics.fillRect(0, 0, renderHandler.getImage().getWidth(), renderHandler.getImage().getHeight());
+
+        double[][] rotationMatrix = mouseWasDragged ? rotationHandler.getRotationMatrix() : I;
+
+        for(int i = 0;i < 360;i += 360/m) {
+            renderHandler.drawProjection(rotationMatrix, i);
+        }
+        renderHandler.drawCircles(m1*m,rotationMatrix);
+
         g.drawImage(renderHandler.getImage(), 0, 0, null);
     }
 
@@ -56,15 +79,12 @@ public class RenderPanel extends JPanel implements MouseMotionListener, MouseLis
             rotationHandler.setVectors(startPoint, new Point(e.getX(), e.getY()), renderHandler.getImage().getWidth(),
                     renderHandler.getImage().getHeight());
             rotationHandler.updateAxis();
-            double[][] rotationMatrix = rotationHandler.calcRotationMatrix(rotationHandler.getAxis(),
-                    rotationHandler.getRotationAngle());
-            renderHandler.updateAxis(rotationMatrix);
-
+            rotationHandler.updateMatrix();
+            renderHandler.updateAxis(rotationHandler.getRotationMatrix());
             renderHandler.updateObjectPoints();
         }
 
         mouseWasDragged = false;
-
     }
 
     @Override
@@ -77,22 +97,14 @@ public class RenderPanel extends JPanel implements MouseMotionListener, MouseLis
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        Graphics graphics = renderHandler.getImage().getGraphics();
-        graphics.setColor(Color.black);
-        graphics.fillRect(0, 0, renderHandler.getImage().getWidth(), renderHandler.getImage().getHeight());
 
         rotationHandler.setVectors(startPoint, new Point(e.getX(), e.getY()), renderHandler.getImage().getWidth(),
                 renderHandler.getImage().getHeight());
         rotationHandler.updateAxis();
-        double[][] rotationMatrix = rotationHandler.calcRotationMatrix(rotationHandler.getAxis(),
-                rotationHandler.getRotationAngle());
-        for(int i = 0;i < 360;i += 360/m) {
-            renderHandler.drawProjection(rotationMatrix, i);
-        }
-        renderHandler.drawCircles(m1,rotationMatrix);
+        rotationHandler.updateMatrix();
 
-        repaint();
         mouseWasDragged = true;
+        repaint();
     }
 
     @Override
@@ -103,21 +115,7 @@ public class RenderPanel extends JPanel implements MouseMotionListener, MouseLis
     public void mouseWheelMoved(MouseWheelEvent e) {
         double delta = e.getPreciseWheelRotation() * 0.1;
         renderHandler.updateZn(delta);
-
-        Graphics graphics = renderHandler.getImage().getGraphics();
-        graphics.setColor(Color.black);
-        graphics.fillRect(0, 0, renderHandler.getImage().getWidth(), renderHandler.getImage().getHeight());
-
-        double[][] I = {
-                {1, 0, 0},
-                {0, 1, 0},
-                {0, 0, 1}
-        };
-
-        for(int i = 0;i < 360;i += 360/m) {
-            renderHandler.drawProjection(I, i);
-        }
-        renderHandler.drawCircles(m1,I);
         repaint();
     }
+
 }
