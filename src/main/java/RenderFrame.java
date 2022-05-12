@@ -8,7 +8,9 @@ import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -17,24 +19,38 @@ public class RenderFrame extends Frame {
     private RenderHandler handler;
     private RenderPanel panel;
 
-    public RenderFrame(ArrayList<Point> points, int m, int m1) throws IOException, NoSuchMethodException {
+    public RenderHandler getHandler() {
+        return handler;
+    }
+
+    public RenderPanel getPanel() {
+        return panel;
+    }
+
+    public RenderFrame() throws IOException, NoSuchMethodException {
         super();
         setMinimumSize(new Dimension(800, 600));
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
 
         addSubMenu("File", KeyEvent.VK_C);
         addMenuItem("File/Save as", "Save image", KeyEvent.VK_S, "save.png", "onSave");
         addMenuItem("File/Open", "Open image", KeyEvent.VK_C, "open-folder.png", "onOpen");
         addMenuItem("File/Exit", "Close app", KeyEvent.VK_C, "power.png", "onExit");
 
+        addSubMenu("Spline",KeyEvent.VK_C);
+        addMenuItem("Spline/Draw spline", "Get spline template",KeyEvent.VK_C,"line.png","onDrawSpline");
+        addMenuItem("Spline/Reset scale", "Rest scale",KeyEvent.VK_C,"scale.png","onResetScale");
+
         addToolBarButton("File/Open");
         addToolBarButton("File/Save as");
+        addToolBarButton("Spline/Draw spline");
 
-        ArrayList<Point> curvePoints = new ArrayList<>();
-        for (Point point : points) {
-            curvePoints.add((Point) point.clone());
-        }
-        panel = new RenderPanel(curvePoints, m, m1);
+        addSubMenu("Help", KeyEvent.VK_S);
+        addMenuItem("Help/About", "About app", 0, "about.png", "onAbout");
+
+        panel = new RenderPanel();
+        panel.setM(5);
+        panel.setM1(2);
         handler = panel.getRenderHandler();
 
         FileHandler fileHandler = new FileHandler(handler.getCurrentObjectsPoints(), handler.getAxis(), handler.getZn());
@@ -45,6 +61,8 @@ public class RenderFrame extends Frame {
         add(panel);
         setVisible(true);
     }
+
+
 
 
     public void onSave() {
@@ -110,7 +128,45 @@ public class RenderFrame extends Frame {
 
     }
 
+    public void onDrawSpline() {
+        MainFrame mainFrame = new MainFrame(panel);
+    }
+
+    public void onResetScale() {
+        panel.getRenderHandler().setZn(10);
+        panel.repaint();
+    }
+
+
     public void onExit() {
         System.exit(0);
+    }
+
+    public void onAbout() {
+        try {
+            getAbout();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    private void getAbout() throws IOException {
+        BufferedReader bufferedReader = new BufferedReader(new FileReader("C:\\Users\\danil\\IdeaProjects\\graphics_labs\\lab4\\" +
+                "src\\main\\resources\\about.txt"));
+        JFrame frame = new JFrame("About");
+        frame.setSize(new Dimension(400, 400));
+        Font font = new Font("Arial",Font.ITALIC,12);
+        JTextArea area = new JTextArea();
+        area.setFont(font);
+        String line;
+        while ((line = bufferedReader.readLine()) != null) {
+            area.append(line);
+            area.append("\n");
+        }
+
+        area.setEditable(false);
+        frame.add(area);
+        frame.setVisible(true);
     }
 }

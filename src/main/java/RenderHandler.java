@@ -18,16 +18,14 @@ public class RenderHandler {
     private static final int imageHeight = 600;
     private double zn = 10;
 
-    public RenderHandler(ArrayList<Point> points, RotationHandler rotationHandler) {
+    public RenderHandler(RotationHandler rotationHandler) {
         image = new BufferedImage(imageWidth, imageHeight, Image.SCALE_SMOOTH);
         this.rotationHandler = rotationHandler;
         curvePoints = new ArrayList<>();
-        calcLocalPoints(points);
         currentObjectsPoints = new ArrayList<>();
         objectPointsBeforeRotation = new ArrayList<>();
 
         axis = new Vector3(1, 0, 0);
-        getStartingCurve(0);
     }
 
     public ArrayList<Vector3> getCurrentObjectsPoints() {
@@ -104,11 +102,12 @@ public class RenderHandler {
         objectPointsBeforeRotation.addAll(currentObjectsPoints);
     }
 
-    public void getStartingCurve(int alpha) {
+    public void getStartingCurve(ArrayList <Point> points, int alpha) {
+        curvePoints.clear();
+        calcLocalPoints(points);
+        objectPointsBeforeRotation.clear();
         double radian = alpha * Math.PI / 180;
         double[][] rotationMatrix = rotationHandler.calcRotationMatrix(axis, radian);
-        double maxXY = 0;
-        double maxZ = 0;
         for (DoublePoint curvePoint : curvePoints) {
             double[] coordinates = {curvePoint.x, curvePoint.y, 0};
             objectPointsBeforeRotation.add(new Vector3(multMatrixOnVector(rotationMatrix, coordinates)));

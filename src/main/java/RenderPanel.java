@@ -11,34 +11,44 @@ public class RenderPanel extends JPanel implements MouseMotionListener, MouseLis
     private final RenderHandler renderHandler;
     private final RotationHandler rotationHandler;
     private Point startPoint;
-    private final int m;
-    private final int m1;
+    private int m;
+    private int m1;
     private final double[][] I;
     private boolean mouseWasDragged = false;
 
-    public RenderPanel(ArrayList<Point> curvePoints, int m,int m1) {
-        this.m = m;
-        this.m1 = m1;
-        this.I = new double[][]{
+    public RenderPanel() {
+//        this.m = m;
+//        this.m1 = m1;
+         this.I = new double[][]{
                 {1, 0, 0},
                 {0, 1, 0},
                 {0, 0, 1}
         };
         rotationHandler = new RotationHandler();
-        renderHandler = new RenderHandler(curvePoints,rotationHandler);
-        for(int i = 0;i < 360;i += 360/m) {
-            renderHandler.drawProjection(rotationHandler.getRotationMatrix(), i);
-        }
-        renderHandler.drawCircles(m1*m,rotationHandler.getRotationMatrix());
+        renderHandler = new RenderHandler(rotationHandler);
+//        for(int i = 0;i < 360;i += 360/m) {
+//            renderHandler.drawProjection(rotationHandler.getRotationMatrix(), i);
+//        }
+//        renderHandler.drawCircles(m1*m,rotationHandler.getRotationMatrix());
         addMouseListener(this);
         addMouseMotionListener(this);
         addMouseWheelListener(this);
 
     }
 
+    public void setM(int m) {
+        this.m = m;
+    }
+
+    public void setM1(int m1) {
+        this.m1 = m1;
+    }
+
     public RenderHandler getRenderHandler() {
         return renderHandler;
     }
+
+
 
     @Override
     protected void paintComponent(Graphics g) {

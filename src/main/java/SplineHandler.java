@@ -34,6 +34,7 @@ public class SplineHandler {
     }
 
     public void deleteCurrentPoint() {
+        if (currentPointIndex == 0) return;
         anchorPoints.remove(currentPointIndex);
         currentPointIndex = anchorPoints.size() - 1;
     }

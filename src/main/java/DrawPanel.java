@@ -70,10 +70,11 @@ public class DrawPanel extends JPanel implements MouseListener, MouseMotionListe
             splineHandler.drawPoint(e.getX(), e.getY());
             splineHandler.addPoint(new Point(e.getX(), e.getY()));
 
-            int size = splineHandler.getAnchorPoints().size();
-            if (size >= 4) {
-                splineHandler.drawSplinePart(size - 4);
-            }
+//            int size = splineHandler.getAnchorPoints().size();
+//            if (size >= 4) {
+//                splineHandler.drawSplinePart(size - 4);
+//            }
+            splineHandler.redrawSpline();
             splineHandler.setCurrentPointIndex(splineHandler.getAnchorPoints().size() - 1);
             settingPanel.currentPointNumberField.setText(String.valueOf(splineHandler.getCurrentPointIndex()));
 

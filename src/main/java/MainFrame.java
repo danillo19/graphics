@@ -1,17 +1,18 @@
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
 
 public class MainFrame extends JFrame {
 
-    public MainFrame() {
+    public MainFrame(RenderPanel renderPanel) {
         super("B-spline");
 
         setLayout(new BorderLayout());
         setMinimumSize(new Dimension(800, 700));
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
         DrawPanel panel = new DrawPanel();
-        SplineSettingPanel settingPanel = new SplineSettingPanel(panel);
+        SplineSettingPanel settingPanel = new SplineSettingPanel(panel, renderPanel);
         panel.setSettingPanel(settingPanel);
 
         add(panel);
@@ -19,7 +20,7 @@ public class MainFrame extends JFrame {
         setVisible(true);
     }
 
-    public static void main(String[] args) {
-        new MainFrame();
+    public static void main(String[] args) throws IOException, NoSuchMethodException {
+       new RenderFrame();
     }
 }

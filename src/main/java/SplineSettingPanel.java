@@ -1,3 +1,5 @@
+import utils.Vector3;
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
@@ -15,7 +17,7 @@ public class SplineSettingPanel extends JPanel {
     public JButton draw3D;
 
 
-    public SplineSettingPanel(DrawPanel panel) {
+    public SplineSettingPanel(DrawPanel panel, RenderPanel renderPanel) {
         JLabel nLabel = new JLabel("n");
         nField = new JTextField("2");
         JLabel currentPointLabel = new JLabel("№");
@@ -32,7 +34,7 @@ public class SplineSettingPanel extends JPanel {
         deletePoint = new JButton("Delete");
         draw3D = new JButton("Draw 3D");
         addPoint = new JButton("Add");
-        GridLayout gridLayout = new GridLayout(4,4);
+        GridLayout gridLayout = new GridLayout(4, 4);
         gridLayout.setVgap(5);
         gridLayout.setHgap(5);
         setLayout(gridLayout);
@@ -53,21 +55,21 @@ public class SplineSettingPanel extends JPanel {
         add(addPoint);
         add(draw3D);
 
-        addListeners(panel);
+        addListeners(panel, renderPanel);
     }
 
-    private void addListeners(DrawPanel panel) {
+    private void addListeners(DrawPanel panel, RenderPanel renderPanel) {
         nField.addActionListener(e -> {
             JTextField field = (JTextField) e.getSource();
-             int n = Integer.parseInt(field.getText());
-             panel.getSplineHandler().setN(n);
-             panel.getSplineHandler().redrawSpline();
-             panel.repaint();
+            int n = Integer.parseInt(field.getText());
+            panel.getSplineHandler().setN(n);
+            panel.getSplineHandler().redrawSpline();
+            panel.repaint();
         });
         currentPointNumberField.addActionListener(e -> {
             JTextField field = (JTextField) e.getSource();
             int currentIndex = Integer.parseInt(field.getText());
-            if(currentIndex >= panel.getSplineHandler().getAnchorPoints().size()) return;
+            if (currentIndex >= panel.getSplineHandler().getAnchorPoints().size()) return;
             panel.getSplineHandler().setCurrentPointIndex(currentIndex);
             panel.getSplineHandler().redrawSpline();
             panel.repaint();
@@ -83,7 +85,7 @@ public class SplineSettingPanel extends JPanel {
             int x = Integer.parseInt(xField.getText());
             int y = Integer.parseInt(yField.getText());
 
-            panel.getSplineHandler().addPoint(new Point(x,y));
+            panel.getSplineHandler().addPoint(new Point(x, y));
             panel.getSplineHandler().redrawSpline();
             panel.repaint();
         });
@@ -92,11 +94,14 @@ public class SplineSettingPanel extends JPanel {
             ArrayList<Point> points = panel.getSplineHandler().getCurvePoints();
             int m = Integer.parseInt(mField.getText());
             int m1 = Integer.parseInt(m1Field.getText());
-            try {
-                RenderFrame renderFrame = new RenderFrame(points,m,m1);
-            } catch (IOException | NoSuchMethodException ex) {
-                ex.printStackTrace();
-            }
+            renderPanel.setM(m);
+            renderPanel.setM1(m1);
+            RenderHandler renderHandler = renderPanel.getRenderHandler();
+            renderHandler.getStartingCurve(points, 0);
+            renderHandler.setAxis(new Vector3(1, 0, 0));
+            renderHandler.setZn(10);
+            renderPanel.repaint();
+
         });
     }
 }
