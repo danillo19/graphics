@@ -1,4 +1,4 @@
-package Rotation;
+package rotation;
 
 import utils.Vector3;
 

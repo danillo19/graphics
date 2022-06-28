@@ -1,3 +1,7 @@
+import draw.DrawPanel;
+import render.RenderPanel;
+import spline.SplineSettingPanel;
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;

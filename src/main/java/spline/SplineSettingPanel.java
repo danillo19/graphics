@@ -1,8 +1,12 @@
+package spline;
+
+import draw.DrawPanel;
+import render.RenderHandler;
+import render.RenderPanel;
 import utils.Vector3;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
 import java.util.ArrayList;
 
 public class SplineSettingPanel extends JPanel {
@@ -91,13 +95,18 @@ public class SplineSettingPanel extends JPanel {
         });
 
         draw3D.addActionListener(e -> {
-            ArrayList<Point> points = panel.getSplineHandler().getCurvePoints();
+            ArrayList<Point> curvePoints = panel.getSplineHandler().getCurvePoints();
+            ArrayList<Point> points = new ArrayList<>();
+            for(Point point: curvePoints) {
+                points.add((Point) point.clone());
+            }
             int m = Integer.parseInt(mField.getText());
             int m1 = Integer.parseInt(m1Field.getText());
             renderPanel.setM(m);
             renderPanel.setM1(m1);
             RenderHandler renderHandler = renderPanel.getRenderHandler();
-            renderHandler.getStartingCurve(points, 0);
+            renderHandler.calcLocalPoints(points);
+            renderHandler.getStartingCurve(0);
             renderHandler.setAxis(new Vector3(1, 0, 0));
             renderHandler.setZn(10);
             renderPanel.repaint();

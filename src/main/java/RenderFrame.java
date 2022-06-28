@@ -1,3 +1,5 @@
+import render.RenderHandler;
+import render.RenderPanel;
 import utils.ExtensionFileFilter;
 import utils.FileHandler;
 import utils.Frame;
@@ -37,13 +39,17 @@ public class RenderFrame extends Frame {
         addMenuItem("File/Open", "Open image", KeyEvent.VK_C, "open-folder.png", "onOpen");
         addMenuItem("File/Exit", "Close app", KeyEvent.VK_C, "power.png", "onExit");
 
-        addSubMenu("Spline",KeyEvent.VK_C);
-        addMenuItem("Spline/Draw spline", "Get spline template",KeyEvent.VK_C,"line.png","onDrawSpline");
-        addMenuItem("Spline/Reset scale", "Rest scale",KeyEvent.VK_C,"scale.png","onResetScale");
+        addSubMenu("Spline", KeyEvent.VK_C);
+        addMenuItem("Spline/Draw spline", "Get spline template", KeyEvent.VK_C, "line.png", "onDrawSpline");
+        addMenuItem("Spline/Reset scale", "Rest scale", KeyEvent.VK_C, "scale.png", "onResetScale");
+        addMenuItem("Spline/Reset angles", "Reset angles", KeyEvent.VK_C, "start.png", "onResetAngles");
 
         addToolBarButton("File/Open");
         addToolBarButton("File/Save as");
         addToolBarButton("Spline/Draw spline");
+        addToolBarButton("Spline/Reset scale");
+        addToolBarButton("Spline/Reset angles");
+
 
         addSubMenu("Help", KeyEvent.VK_S);
         addMenuItem("Help/About", "About app", 0, "about.png", "onAbout");
@@ -53,16 +59,15 @@ public class RenderFrame extends Frame {
         panel.setM1(2);
         handler = panel.getRenderHandler();
 
-        FileHandler fileHandler = new FileHandler(handler.getCurrentObjectsPoints(), handler.getAxis(), handler.getZn());
+        FileHandler fileHandler = new FileHandler(handler.getCurrentObjectsPoints(), handler.getAxis(), handler.getZn(), handler.getCurvePoints());
         fileHandler.readInfoFromFile(new File("src/main/resources/2.moi"));
         handler.setAxis(fileHandler.getAxis());
+        handler.setCurvePoints(fileHandler.getStartingPoints());
         handler.setObjectPointsBeforeRotation(fileHandler.getPoints());
         handler.setZn(fileHandler.getZn());
         add(panel);
         setVisible(true);
     }
-
-
 
 
     public void onSave() {
@@ -86,7 +91,8 @@ public class RenderFrame extends Frame {
                 format = extendedFileFilter.getExtension();
             }
             try {
-                FileHandler fileHandler = new FileHandler(handler.getCurrentObjectsPoints(), handler.getAxis(), handler.getZn());
+                FileHandler fileHandler = new FileHandler(handler.getCurrentObjectsPoints(), handler.getAxis(),
+                        handler.getZn(), handler.getCurvePoints());
                 fileHandler.dumpInfoIntoFile(file);
             } catch (IOException ex) {
                 ex.printStackTrace();
@@ -110,16 +116,16 @@ public class RenderFrame extends Frame {
         if (result == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
             System.out.println(file.getAbsolutePath());
-            FileHandler fileHandler = new FileHandler(handler.getCurrentObjectsPoints(), handler.getAxis(), handler.getZn());
+            FileHandler fileHandler = new FileHandler(handler.getCurrentObjectsPoints(), handler.getAxis(), handler.getZn(), handler.getCurvePoints());
             try {
                 fileHandler.readInfoFromFile(file);
-            }
-            catch (Exception e) {
-                JOptionPane.showMessageDialog(this,"File has not valid data. Rewrite data");
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "File has not valid data. Rewrite data");
                 return;
             }
             handler.setAxis(fileHandler.getAxis());
             handler.setObjectPointsBeforeRotation(fileHandler.getPoints());
+            handler.setCurvePoints(fileHandler.getStartingPoints());
             handler.setZn(fileHandler.getZn());
 
             panel.repaint();
@@ -130,6 +136,11 @@ public class RenderFrame extends Frame {
 
     public void onDrawSpline() {
         MainFrame mainFrame = new MainFrame(panel);
+    }
+
+    public void onResetAngles() {
+        panel.getRenderHandler().resetAngles();
+        panel.repaint();
     }
 
     public void onResetScale() {
@@ -156,7 +167,7 @@ public class RenderFrame extends Frame {
                 "src\\main\\resources\\about.txt"));
         JFrame frame = new JFrame("About");
         frame.setSize(new Dimension(400, 400));
-        Font font = new Font("Arial",Font.ITALIC,12);
+        Font font = new Font("Arial", Font.ITALIC, 12);
         JTextArea area = new JTextArea();
         area.setFont(font);
         String line;

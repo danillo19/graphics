@@ -1,15 +1,16 @@
-import Rotation.RotationHandler;
+package render;
+
+import rotation.RotationHandler;
 import utils.DoublePoint;
 import utils.Vector3;
 
 import java.awt.*;
-import java.awt.image.AreaAveragingScaleFilter;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 public class RenderHandler {
     private BufferedImage image;
-    private final ArrayList<DoublePoint> curvePoints;
+    private ArrayList<DoublePoint> curvePoints;
     private final ArrayList<Vector3> currentObjectsPoints;
     private ArrayList<Vector3> objectPointsBeforeRotation;
     private RotationHandler rotationHandler;
@@ -17,6 +18,7 @@ public class RenderHandler {
     private static final int imageWidth = 800;
     private static final int imageHeight = 600;
     private double zn = 10;
+    private double zb = 10000;
 
     public RenderHandler(RotationHandler rotationHandler) {
         image = new BufferedImage(imageWidth, imageHeight, Image.SCALE_SMOOTH);
@@ -26,6 +28,10 @@ public class RenderHandler {
         objectPointsBeforeRotation = new ArrayList<>();
 
         axis = new Vector3(1, 0, 0);
+    }
+
+    public ArrayList<DoublePoint> getCurvePoints() {
+        return curvePoints;
     }
 
     public ArrayList<Vector3> getCurrentObjectsPoints() {
@@ -43,6 +49,10 @@ public class RenderHandler {
     public void setObjectPointsBeforeRotation(ArrayList<Vector3> objectPointsBeforeRotation) {
         this.objectPointsBeforeRotation.clear();
         this.objectPointsBeforeRotation.addAll(objectPointsBeforeRotation);
+    }
+
+    public void setCurvePoints(ArrayList<DoublePoint> points) {
+        curvePoints = points;
     }
 
     public void setAxis(Vector3 axis) {
@@ -67,10 +77,15 @@ public class RenderHandler {
 
     public void updateZn(double delta) {
         zn += delta;
-        System.out.println(zn);
+        //System.out.println(zn);
         if (zn < 0) {
             zn = 0;
         }
+    }
+
+    public void resetAngles() {
+        setAxis(new Vector3(1,0,0));
+        getStartingCurve(0);
     }
 
     public void drawProjection(double[][] rotationMatrix, int alpha) {
@@ -78,8 +93,9 @@ public class RenderHandler {
         rotateObjectWithMatrix(rotationMatrix);
 
         ArrayList<Vector3> cameraPoints = getCameraCoordinates(currentObjectsPoints);
-        ArrayList<Point> points = getScreenProjection(cameraPoints);
-
+        //ArrayList<Point> points = getScreenProjection(cameraPoints);
+        ArrayList<DoublePoint> cubePoints = getCubeProjection(cameraPoints);
+        ArrayList<Point> points = getScreenPoints(cubePoints);
         Graphics graphics = image.getGraphics();
 
         for (int i = 0; i < points.size() - 1; i++) {
@@ -89,7 +105,7 @@ public class RenderHandler {
     }
 
     public void calcLocalPoints(ArrayList<Point> points) {
-
+        curvePoints.clear();
         for (Point point : points) {
             point.x -= image.getWidth() / 2;
             point.y = image.getHeight() / 2 - point.y;
@@ -102,9 +118,7 @@ public class RenderHandler {
         objectPointsBeforeRotation.addAll(currentObjectsPoints);
     }
 
-    public void getStartingCurve(ArrayList <Point> points, int alpha) {
-        curvePoints.clear();
-        calcLocalPoints(points);
+    public void getStartingCurve(int alpha) {
         objectPointsBeforeRotation.clear();
         double radian = alpha * Math.PI / 180;
         double[][] rotationMatrix = rotationHandler.calcRotationMatrix(axis, radian);
@@ -150,7 +164,9 @@ public class RenderHandler {
     public void drawCircle(int pointNumber, Vector3 levelPoint, double[][] rotationMatrix) {
         ArrayList<Vector3> circlePoints = getCircleApproximation(pointNumber, levelPoint, rotationMatrix);
         ArrayList<Vector3> cameraPoints = getCameraCoordinates(circlePoints);
-        ArrayList<Point> points = getScreenProjection(cameraPoints);
+        //ArrayList<Point> points = getScreenProjection(cameraPoints);
+        ArrayList<DoublePoint> cubePoints = getCubeProjection(cameraPoints);
+        ArrayList<Point> points = getScreenPoints(cubePoints);
 
         Graphics graphics = image.getGraphics();
         graphics.setColor(Color.CYAN);
@@ -219,23 +235,56 @@ public class RenderHandler {
         return cameraPoints;
     }
 
+    public ArrayList<DoublePoint> getCubeProjection(ArrayList<Vector3> cameraPoints) {
+        double[][] projectionMatrix = new double[][] {
+                {zn,0,0,0},
+                {0,zn,0,0},
+                {0,0,zb / (zb - zn),(-zn*zb)/(zb - zn)},
+                {0,0,1,0}
+        };
 
-    public ArrayList<Point> getScreenProjection(ArrayList<Vector3> cameraPoints) {
-        ArrayList<DoublePoint> cubeProjection = new ArrayList<>(cameraPoints.size());
+        ArrayList<DoublePoint> projectedPoints = new ArrayList<>();
 
-        for (Vector3 point : cameraPoints) {
-            cubeProjection.add(new DoublePoint(point.x / (point.z / zn), point.y / (point.z / zn)));
+        for(Vector3 vector: cameraPoints) {
+            double[] coords = new double[4];
+            for(int i = 0;i < 3;i++) {
+                coords[i] = vector.toDouble()[i];
+            }
+            coords[3] = 1;
+            double[] projectedVector = multMatrixOnVector(projectionMatrix,coords);
+            projectedPoints.add(new DoublePoint(projectedVector[0] / projectedVector[3],projectedVector[1] / projectedVector[3] ));
         }
 
-        ArrayList<Point> intPoints = new ArrayList<>(cubeProjection.size());
+        return projectedPoints;
 
+    }
 
-        for (DoublePoint point : cubeProjection) {
-            intPoints.add(new Point((int) (point.x * (image.getWidth() / 2)) + (image.getWidth() / 2),
+    public ArrayList<Point> getScreenPoints(ArrayList<DoublePoint> projectedPoints) {
+        ArrayList<Point> screenPoints = new ArrayList<>();
+        for(DoublePoint point: projectedPoints) {
+            screenPoints.add(new Point((int) (point.x * (image.getWidth() / 2)) + (image.getWidth() / 2),
                     -(int) (point.y * (image.getHeight() / 2)) + (image.getHeight() / 2)));
         }
-        return intPoints;
+
+        return screenPoints;
     }
+
+//    public ArrayList<Point> getScreenProjection(ArrayList<Vector3> cameraPoints) {
+//        ArrayList<DoublePoint> cubeProjection = new ArrayList<>(cameraPoints.size());
+//
+//        for (Vector3 point : cameraPoints) {
+//            cubeProjection.add(new DoublePoint(point.x / (point.z / zn), point.y / (point.z / zn)));
+//        }
+//
+//        ArrayList<Point> intPoints = new ArrayList<>(cubeProjection.size());
+//
+//
+//        for (DoublePoint point : cubeProjection) {
+//            intPoints.add(new Point((int) (point.x * (image.getWidth() / 2)) + (image.getWidth() / 2),
+//                    -(int) (point.y * (image.getHeight() / 2)) + (image.getHeight() / 2)));
+//        }
+//        return intPoints;
+//    }
 
 
     private double[] multMatrixOnVector(double[][] matrix, double[] vector) {
